@@ -1,0 +1,24 @@
+<ul class="nav navbar-nav">
+        <li class="dropdown active">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+             aria-expanded="false">项目{% if request.tracer.project %}({{ request.tracer.project.name }}){% endif %}<span class="caret"></span></a>
+          <!--上面行能使用request,得益于自定义标签函数中有个形参request 而模板中使用标签的地方传入了实参request,-->
+            <ul class="dropdown-menu">
+              {% if my %}
+                  <li><i class="fa fa-list" aria-hidden="true">我创建的项目</i></li>
+                  {% for item in my %}
+                      <li><a href="{% url 'dashboard' item.id %}">{{ item.name }}</a></li>
+                  {% endfor %}
+                  <li role="separator" class="divider"></li>
+              {% endif %}
+              {% if join %}
+                  <li><i class="fa fa-handshake-o" aria-hidden="true">我参与的项目</i></li>
+                  {% for item in join %}
+                      <li><a href="{% url 'dashboard' item.project.id %}">{{ item.project.name }}</a></li>
+                  {% endfor %}
+                  <li role="separator" class="divider"></li>
+              {% endif %}
+            <li><a href="#">所有项目</a></li>
+          </ul>
+        </li>
+      </ul>

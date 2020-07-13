@@ -1,0 +1,228 @@
+{% extends 'layout/manage.html' %}
+
+{% block css %}
+    <style>
+        .project {
+            margin-top: 10px;
+        }
+
+        .panel-body {
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: left;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .panel-body > .item {
+            border-radius: 6px;
+            width: 228px;
+            border: 1px solid #dddddd;
+            margin: 20px 10px;
+
+        }
+
+        .panel-body > .item:hover {
+            border: 1px solid #f0ad4e;
+        }
+
+        .panel-body > .item > .title {
+            height: 104px;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-size: 15px;
+            text-decoration: none;
+        }
+
+        .panel-body > .item > .info {
+            padding: 10px 10px;
+
+            display: flex;
+            justify-content: space-between;
+
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            color: #8c8c8c;
+
+        }
+
+        .panel-body > .item > .info a {
+            text-decoration: none;
+        }
+
+        .panel-body > .item > .info .fa-star {
+            font-size: 18px;
+        }
+
+        .color-radio label {
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .color-radio input[type="radio"] {
+            display: none;
+        }
+
+        .color-radio input[type="radio"] + .cycle {
+            display: inline-block;
+            height: 25px;
+            width: 25px;
+            border-radius: 50%;
+            border: 2px solid #dddddd;
+        }
+
+        .color-radio input[type="radio"]:checked + .cycle {
+            border: 2px solid black;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid project">
+        <!--对应下面模态框的按钮 -->
+        <a class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+            <i class="fa fa-plus-circle" aria-hidden="true"></i>新建项目
+        </a>
+    </div>
+    <!-- Modal Bootstrap的JavaScript插件中复制下来的-->
+    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">新建项目</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="projectForm">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label for={{ field.id_for_label }}>{{ field.label }}</label>
+                                {{ field }}
+                                <span class="error-msg"></span>
+                            </div>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button id="btnSubmit" type="button" class="btn btn-primary">确 定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--面板-->
+    <div class="panel panel-default">
+        <div class="panel-heading"><i class="fa fa-star" aria-hidden="true"></i>星标项目</div>
+        <div class="panel-body">
+            {% for project in project_dict.star %}
+                <div class="item">
+                    <!--颜色选择是一个下拉框，数据库中color字段存储的是1，对应颜色的取值方法如下-->
+                    <a href="{% url 'dashboard' project_id=project.value.id %}" class="title"
+                       style="background-color: {{ project.value.get_color_display }};">
+                        {{ project.value.name }} </a>
+                    <div class="info">
+                        <div>
+                            <a href="{% url 'project_unstar' project_type=project.type project_id=project.value.id %}">
+                                <i class="fa fa-star" aria-hidden="true" style="color: #f0ad4e;"></i>
+                            </a>
+                            <span>{{ project.value.creator.username }}</span>
+                        </div>
+                        <div>
+                            <i class="fa fa-user-o" aria-hidden="true"></i>
+                            <span>{{ project.value.join_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-bars" aria-hidden="true"></i>我创建的项目</h3>
+        </div>
+        <div class="panel-body">
+            {% for project in project_dict.my %}
+                <div class="item">
+                    <!--颜色选择是一个下拉框，数据库中color字段存储的是1，对应颜色的取值方法如下-->
+                    <a href="{% url 'dashboard' project_id=project.value.id %}" class="title"
+                       style="background-color: {{ project.value.get_color_display }};">
+                        {{ project.value.name }} </a>
+                    <div class="info">
+                        <div>
+                            <a href="{% url 'project_star' project_type=project.type project_id=project.value.id %}">
+                                <i class="fa fa-star" aria-hidden="true" style="color: #d5d5d5"></i>
+                            </a>
+                            <span>{{ project.value.creator.username }}</span>
+                        </div>
+                        <div>
+                            <i class="fa fa-user-o" aria-hidden="true"></i>
+                            <span>{{ project.value.join_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><i class="fa fa-tasks" aria-hidden="true"></i>我参与的项目</h3>
+        </div>
+        <div class="panel-body">
+            {% for project in project_dict.join %}
+                <div class="item">
+                    <!--颜色选择是一个下拉框，数据库中color字段存储的是1，对应颜色的取值方法如下-->
+                    <a href="{% url 'dashboard' project_id=project.value.id %}" class="title"
+                       style="background-color: {{ project.value.get_color_display }};">
+                        {{ project.value.name }} </a>
+                    <div class="info">
+                        <div>
+                            <a href="{% url 'project_star' project_type=project.type project_id=project.value.id %}">
+                                <i class="fa fa-star" aria-hidden="true" style="color: #d5d5d5;"></i>
+                            </a>
+                            <span>{{ project.value.creator.username }}</span>
+                        </div>
+                        <div>
+                            <i class="fa fa-user-o" aria-hidden="true"></i>
+                            <span>{{ project.value.join_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () {
+            bindSubmit();
+        });
+
+        function bindSubmit() {
+            $('#btnSubmit').click(function () {
+                $.ajax({
+                    url: "{% url 'project_list' %}",
+                    type: 'POST',
+                    data: $('#projectForm').serialize(),
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            //location.href = location.href;//页面主动刷新一次
+                            location.reload();
+                        } else {
+                            $.each(res.error, function (key, value) {
+                                $('#id_' + key).next().text(value[0]);
+                            })
+                        }
+                    }
+                })
+            })
+        }
+    </script>
+{% endblock %}

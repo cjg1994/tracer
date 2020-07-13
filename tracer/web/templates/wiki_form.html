@@ -1,0 +1,124 @@
+{% extends 'layout/manage.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/editor/css/editormd.min.css' %}">
+    <style>
+        .panel-default {
+
+        }
+
+        .panel-body {
+            padding: 0;
+        }
+
+        .title-list {
+            border-right: 1px solid #dddddd;
+            min-height: 500px;
+        }
+        .title-list ul{
+            padding-left: 15px;
+        }
+        .title-list ul a{
+            display: block;
+            padding: 5px 0;
+        }
+
+        .content {
+            border-left: 1px solid #dddddd;
+            min-height: 600px;
+            margin-left: -1px;
+        }
+        .editormd-fullscreen{
+            z-index: 1001;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i>wiki知识库</div>
+            <div class="panel-body">
+                <div class="col-sm-3 title-list">
+                    <div id="catalog">
+                    目录
+                        </div>
+                </div>
+                <div class="col-sm-9 content">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            {% if field.name == 'content' %}
+                                <div class="form-group">
+                                    <label for={{ field.id_for_label }}>{{ field.label }}</label>
+                                    <!--把textarea放入一个div方便以后查找并转换为编辑器,引入编辑器的css文件和js文件-->
+                                    <div id="editor">
+                                        {{ field }}
+                                    </div>
+                                    <span class="error-msg">{{ field.errors.0 }}</span>
+                                </div>
+                            {% else %}
+                                <div class="form-group">
+                                    <label for={{ field.id_for_label }}>{{ field.label }}</label>
+                                    {{ field }}
+                                    <span class="error-msg">{{ field.errors.0 }}</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <button type="submit" class="btn btn-default">提 交</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/editor/editormd.min.js' %}"></script>
+    <script>
+        var WIKI_DETAIL_URL = "{% url 'wiki' project_id=request.tracer.project.id %}";
+        $(function () {
+            dirDisplay();
+            initEditorMd();
+        });
+        function dirDisplay() {
+            $.ajax({
+                url:"{% url 'wiki_catalog' request.tracer.project.id %}",
+                type:"GET",
+                dataType:"JSON",
+                success:function (res) {
+                    if(res.status){
+                        //console.log(res.data)
+
+                        $.each(res.data,function (index,item) {
+                            var href = WIKI_DETAIL_URL+'?wiki_id='+item.id;
+                            var li = $('<li>').attr('id','id_'+item.id).append($('<a>').attr('href',href).text(item.title)).append($('<ul>'));
+                            if(!item.parent_id){
+                                $('#catalog').append(li);
+                            }else{
+                                $('#id_'+item.parent_id).children('ul').append(li)
+                            }
+                        })
+                    }else{
+
+                    }
+                }
+
+            })
+        }
+        /*
+        初始化markdown编辑器
+         */
+        function initEditorMd() {
+            //第一个参数是textarea放在哪个div中，这个div的id;第二个参数是一个字典，一些初始化配置参数path参数是必须的，指定编辑器初始化时以来的一些JS文件；
+            editormd('editor',{
+                placeholder:'请输入内容',
+                height:500,
+                path:"{% static 'plugin/editor/lib/' %}",
+                //如果需要markdown编辑器中支持本地图片上传，要传入以下几个参数
+                imageUpload:true,
+                imageFormats:["jpg","jpeg","png","gif"], //这个参数一定要是一个列表，不能写成元祖，不然会有问题，一直不调用对应的视图函数
+                imageUploadURL:"{% url 'wiki_upload' request.tracer.project.id %}"   //上传时会向这个url发送请求，所以写一个视图函数来匹配这个url进行处理
+            })
+        }
+    </script>
+{% endblock %}

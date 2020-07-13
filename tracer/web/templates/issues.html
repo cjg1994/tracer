@@ -1,0 +1,517 @@
+{% extends 'layout/manage.html' %}
+{% load static %}
+{% load issues %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/editor/css/editormd.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrapselect/css/bootstrap-select.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/select2/css/select2.min.css' %}">
+    <style>
+        .issues-list .number {
+            width: 100px;
+            text-align: right;
+        }
+
+        .issues-list .number a {
+            font-weight: 500;
+            padding: 0 10px;
+        }
+
+        .issues-list .issue .tags {
+            padding: 10px 0;
+        }
+
+        .issues-list .issue .tags span {
+            margin-right: 20px;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        .issues-list .issue .tags .type {
+            color: white;
+            padding: 1px 5px;
+            border-radius: 5px;
+            background-color: #dddddd;
+        }
+
+        .editormd {
+            margin-bottom: 0;
+        }
+
+        .pd-0 {
+            padding: 0 !important;
+        }
+
+        /* 筛选 */
+        .filter-area .item {
+            margin-bottom: 15px;
+        }
+
+        .filter-area .item .title {
+            padding: 5px 0;
+        }
+
+        .filter-area .item .check-list a {
+            text-decoration: none;
+            display: inline-block;
+            min-width: 65px;
+        }
+
+        .filter-area .item .check-list label {
+            font-weight: 200;
+            font-size: 13px;
+            margin-left: 3px;
+        }
+
+        .filter-area .item .check-list a:hover {
+            font-weight: 300;
+        }
+
+        .filter-area .item .check-list .cell {
+            margin-right: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid clearfix" style="padding: 20px 0;">
+        <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-search" aria-hidden="true"></i> 筛选
+                </div>
+                <div class="panel-body filter-area">
+                    <div class="item">
+                        <div class="title">状态</div>
+                        <div class="check-list">
+                            {% for row in status_filter %}
+                                {{ row }}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="item">
+                        <div class="title">优先级</div>
+                        <div class="check-list">
+                            {% for row in priority_filter %}
+                                {{ row }}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="item">
+                        <div class="title">类型</div>
+                        <div class="check-list">
+                            {% for row in issues_type_filter %}
+                                {{ row }}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="item">
+                        <div class="title">指派给：</div>
+                        <div class="check-list">
+                            {% for row in assign_filter %}
+                                {{ row }}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="item">
+                        <div class="title">关注者：</div>
+                        <div class="check-list">
+                            {% for row in attention_filter %}
+                                {{ row }}
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-sm-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-quora" aria-hidden="true"></i> 问题
+                </div>
+                <div class="panel-body">
+                    <a class="btn btn-success btn-sm" data-toggle="modal" data-target="#addModal">新建问题</a>
+                    <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#inviteModal">邀请成员</a>
+                </div>
+                <table class="table">
+
+                    <tbody class="issues-list">
+                    {% for item in issues_object_list %}
+                        <tr>
+                            <td class="number">
+                                <i class="fa fa-circle text-{{ item.priority }}"></i>
+                                <a target="_blank"
+                                   href="{% url 'issues_detail' request.tracer.project.id item.id %}">{% string_just item.id %}</a>
+                            </td>
+                            <td class="issue">
+                                <div>
+                                    <a target="_blank"
+                                       href="{% url 'issues_detail' request.tracer.project.id item.id %}">{{ item.subject }}</a>
+                                </div>
+                                <div class="tags">
+                                    <span class="type">
+                                        {{ item.issues_type.title }}
+                                    </span>
+                                    <span>
+                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                        {{ item.get_status_display }}
+                                    </span>
+                                    {% if item.assign %}
+                                        <span>
+                                    <i class="fa fa-hand-o-right" aria-hidden="true"></i>
+                                    {{ item.assign.username }}
+                                </span>
+                                    {% endif %}
+
+                                    <span>
+                                        <i class="fa fa-user-o" aria-hidden="true"></i>
+                                        {{ item.creator.username }}
+                                    </span>
+                                    {% if item.end_date %}
+                                        <span>
+                                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        {{ item.end_date }}截止
+                                    </span>
+                                    {% endif %}
+                                    <span><i class="fa fa-clock-o"
+                                             aria-hidden="true"></i> {{ item.latest_update_datetime }}更新</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <nav aria-label="...">
+                <ul class="pagination" style="margin-top: 0;">
+                    {{ page_html | safe }}
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="inviteForm">
+                        {% csrf_token %}
+                        {% for item in invite_form %}
+                            <div class="form-group">
+                                <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                                <span>{% if  item.help_text %}（{{ item.help_text }}）{% endif %}</span>
+                                {{ item }}
+                                <span class="error-msg"></span>
+                            </div>
+                        {% endfor %}
+                        <button type="button" class="btn btn-success" id="btnGenInviteCode">生成邀请码</button>
+                    </form>
+                    <div id="inviteArea" class="hide">
+                        <hr/>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <div class="input-group-btn">
+                                    <input type="button" value="邀请链接" class="btn btn-default">
+                                </div>
+                                <input type="text" class="form-control" id="inviteUrl">
+                                <div class="input-group-btn">
+                                    <input type="button" value="复制链接" class="btn btn-primary" id="btnCopyUrl">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Large modal -->
+    <div id="addModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog"
+         aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">新建问题</h4>
+                </div>
+                <div class="modal-body" style="padding-right: 40px">
+                    <form id="addForm" class="form-horizontal">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.issues_type.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.issues_type.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.issues_type }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.subject.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.subject.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.subject }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.module.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.module.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.module }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.desc.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.desc.label }}</label>
+                            <div class="col-sm-10">
+                                <div id="editor">
+                                    {{ form.desc }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.status.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.status.label }}</label>
+                                <div class="col-md-8 clearfix">
+                                    <div>
+                                        {{ form.status }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                            <div class="col-md-6 pd-0">
+                                <label for=" {{ form.priority.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.priority.label }}</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.priority }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">指派给</label>
+                                <div class="col-md-8">
+                                    {{ form.assign }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">关注者</label>
+                                <div class="col-md-8">
+
+                                    {{ form.attention }}
+
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">开始时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.start_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">截止时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.end_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">模式</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.mode }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label"> 父问题</label>
+                                <div class="col-md-8">
+
+                                    {{ form.parent }}
+
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="AddSubmit">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/editor/editormd.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrapselect/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrapselect/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script src="{% static 'plugin/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'plugin/select2/js/i18n/zh-CN.js' %}"></script>
+    <script>
+        var WIKI_UPLOAD_URL = "{% url 'wiki_upload' request.tracer.project.id %}";
+        var ADD_ISSUES_URL = "{% url 'issues' request.tracer.project.id %}";
+        var INVITE_URL = "{% url 'invite_url' project_id=request.tracer.project.id %}";
+
+        $(function () {
+            bindBootStrapShowEvent();
+            initDatePicker();
+            bindAddSubmit();
+            initSelect2();
+
+            bindCreateInviteCode();
+            bindCopyUrl();
+        });
+        function bindCopyUrl() {
+            $('#btnCopyUrl').click(function () {
+                //点击复制链接 调用DOM中的execCommand方法
+                $('#inviteUrl')[0].select();//DOM对象的select方法 选中输入框的值
+                document.execCommand('Copy');
+                alert('复制成功');
+            })
+        }
+        //点击生成邀请码向后台发送ajax请求
+        function bindCreateInviteCode() {
+            $('#btnGenInviteCode').click(function () {
+                $.ajax({
+                    url:INVITE_URL,
+                    type:'POST',
+                    data:$('#inviteForm').serialize(),
+                    dataType:'JSON',
+                    success:function (res) {
+                        console.log(res);
+                        if(res.status){
+                            $('#inviteArea').removeClass('hide').find('#inviteUrl').val(res.data); //input输入框写入值要用val()而不是text()
+                        }else{
+                            $.each(res.error, function (k, v) {
+                                $('#id_' + k).next('.error-msg').text(v[0]);
+                            })
+                        }
+                    }
+                });
+            })
+        }
+        //应用select2插件，找到select标签调用sleect2方法,可以添加初始化配置，可以绑定事件
+        function initSelect2() {
+            $('.select2').select2({}).on('select2:select', function (event) {
+                //选中某一项时触发
+                location.href = event.params.data.id;
+            }).on('select2:unselect', function (event) {
+                //移除某一项触发
+                location.href = event.params.data.id;
+            });
+        }
+
+        function bindAddSubmit() {
+            $('#AddSubmit').click(function () {
+                $('#addForm').find('.error-msg').empty();
+                $.ajax({
+                    url: ADD_ISSUES_URL,
+                    type: 'POST',
+                    data: $('#addForm').serialize(),
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            //console.log(res)
+                            location.reload();
+                        } else {
+                            $.each(res.error, function (key, value) {
+                                $('#id_' + key).parent().next().text(value[0])
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+        function bindBootStrapShowEvent() {
+            $('#addModal').on('shown.bs.modal', function (event) {
+                //对话框弹出时触发的事件，在这里初始化markdown编辑器
+                initMarkdown();//如果页面加载完成时就执行初始化编辑器，那么当点开对话框时编辑器是不可编辑内容的
+            })
+        }
+
+        function initDatePicker() {
+            $('#id_start_date,#id_end_date').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: '0',
+                language: 'zh-CN', //中文显示，要引入一个js
+                autoclose: true
+            });
+        }
+
+        //初始化Markdown编辑器
+        function initMarkdown() {
+            editormd('editor', {
+                placeholder: '请输入内容',
+                height: 300,
+                path: "{% static 'plugin/editor/lib/' %}",
+                //如果需要markdown编辑器中支持本地图片上传，要传入以下几个参数
+                imageUpload: true,
+                imageFormats: ["jpg", "jpeg", "png", "gif"], //这个参数一定要是一个列表，不能写成元祖，不然会有问题，一直不调用对应的视图函数
+                imageUploadURL: WIKI_UPLOAD_URL   //上传时会向这个url发送请求，所以写一个视图函数来匹配这个url进行处理
+            })
+        }
+    </script>
+{% endblock %}

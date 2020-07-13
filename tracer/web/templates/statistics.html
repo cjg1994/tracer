@@ -1,0 +1,197 @@
+{% extends 'layout/manage.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/daterangepicker/daterangepicker.css' %}">
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div>
+            <div class="input-group" style="width: 300px;">
+                <span class="input-group-addon">日期范围</span>
+                <input id="rangePicker" type="text" class="form-control">
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-8">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i> 人员工作进度
+                    </div>
+                    <div class="panel-body">
+                        <div id="projectUser" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-pie-chart" aria-hidden="true"></i> 优先级统计
+                    </div>
+                    <div class="panel-body">
+                        <div id="priority" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/daterangepicker/moment.min.js' %}"></script>
+    <script src="{% static 'plugin/daterangepicker/daterangepicker.js' %}"></script>
+    <script src="{% static 'plugin/highcharts/highcharts.js' %}"></script>
+    <script>
+
+        $(function () {
+            initDateRangePicker();
+            priority(moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')); //默认显示今天的问题数优先级统计
+            projectUser(moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'));
+        });
+
+        function initDateRangePicker() {
+            var options = {
+                maxDate: moment(),
+                alwaysShowCalendars: true,
+                showWeekNumbers: true,
+                ranges: {
+                    '今天': [moment(), moment()],//开始时间 结束时间 中间间隔就表示了时间长度
+                    '昨天': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    '最近7天': [moment().subtract(6, 'days'), moment()],
+                    '最近30天': [moment().subtract(29, 'days'), moment()],
+                    '本月': [moment().startOf('month'), moment().endOf('month')]
+                },
+                locale: {//本地汉化配置
+                    format: 'YYYY-MM-DD',
+                    separator: ' 至 ',
+                    applyLabel: '确定',
+                    cancelLabel: '取消',
+                    fromLabel: '开始',
+                    toLabel: '结束',
+                    customRangeLabel: '自定义',
+                    weekLabel: 'W',
+                    daysOfWeek: ['一', '二', '三', '四', '五', '六', '日'],
+                    monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+                    firstDay: 1
+                }
+            };
+            $('#rangePicker').daterangepicker(options, function (start, end, label) {
+                //时间选择器中选择了一段时间之后点确定就会触发这个函数
+                console.log(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')); //时间对象格式化成字符串
+                //选择时间后向后台发个ajax请求获取对应时间段内所需数据
+                priority(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));//这里只能传入字符串形式的时间对象，因为要向后台发送这两个时间数据
+                projectUser(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+            });
+
+        }
+
+        function priority(start, end) {
+            $.ajax({
+                url: "{% url 'statistics_chart' request.tracer.project.id %}",
+                type: "GET",
+                data: {start: start, end: end}, //这里只能向后台传递时间对象的字符串形式，不然会报错，获取不了某个属性
+                dataType: "JSON",
+                success: function (res) {
+                    console.log(res);
+                    if (res.status) {
+                        // Build the chart
+                        Highcharts.chart('priority', {
+                            chart: {
+                                plotBackgroundColor: null,
+                                plotBorderWidth: null,
+                                plotShadow: false,
+                                type: 'pie'
+                            },
+                            title: {
+                                text: '问题数优先级统计'
+                            },
+                            tooltip: {
+                                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                            },
+                            plotOptions: {
+                                pie: {
+                                    allowPointSelect: true,
+                                    cursor: 'pointer',
+                                    dataLabels: {
+                                        enabled: false
+                                    },
+                                    showInLegend: true
+                                }
+                            },
+                            series: [{
+                                name: 'Brands',
+                                colorByPoint: true,
+                                data: res.data
+                            }]
+                        });
+                    }
+                }
+            });
+        }
+
+        function projectUser(start, end) {
+            var config = {
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: null
+                },
+                credits: {
+                    enabled: false // 关闭版权信息
+                },
+                xAxis: {
+                    categories: ['武沛齐', '万光', '很熟哦']
+                },
+
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: '问题数量'
+                    },
+                    stackLabels: {  // 堆叠数据标签
+                        enabled: true,
+                        style: {
+                            fontWeight: 'bold',
+                            color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+                        }
+                    }
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'top'
+
+                },
+                tooltip: {
+                    formatter: function () {
+                        return '<b>' + this.x + '</b><br/>' +
+                            this.series.name + ': ' + this.y + '<br/>' +
+                            '总量: ' + this.point.stackTotal;
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        stacking: 'normal',
+                        dataLabels: {
+                            enabled: false
+                        }
+                    }
+                },
+                series: []
+            };
+            $.ajax({
+                url: "{% url 'statistics_project_user' request.tracer.project.id %}",
+                type: "GET",
+                data: {start: start, end: end},
+                dataType: "JSON",
+                success: function (res) {
+                    config.xAxis.categories = res.data.categories;
+                    config.series = res.data.series;
+                    Highcharts.chart('projectUser', config);
+
+                }
+
+            })
+        }
+    </script>
+{% endblock %}

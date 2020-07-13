@@ -1,0 +1,438 @@
+{% extends 'layout/manage.html' %}
+{% load static %}
+{% load issues %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/editor/css/editormd.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugin/bootstrapselect/css/bootstrap-select.min.css' %}">
+    <style>
+
+        .comment-area .item {
+            margin-top: 20px;
+        }
+
+        .comment-area .left-avatar {
+            float: left;
+            margin-right: 10px;
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #304659;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+        }
+
+        .comment-area .right-info {
+            padding-left: 35px;
+        }
+
+        .comment-area .right-info .desc .msg {
+            display: inline-block;
+            padding-right: 20px;
+            color: #8c8c8c;
+        }
+
+        .comment-area .child {
+            padding-left: 55px;
+        }
+
+        .comment-area .error-msg {
+            color: red;
+        }
+
+        .comment-area .reply-user {
+            display: inline-block;
+            background-color: #ddd;
+            color: black;
+            padding: 6px 8px;
+            margin-left: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .editormd-fullscreen {
+            z-index: 1001;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid clearfix" style="padding: 20px 0;">
+        <div class="col-sm-7">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-quora" aria-hidden="true"></i> 更新问题
+                </div>
+                <div class="panel-body filter-area">
+                    <form id="editForm" class="form-horizontal">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.issues_type.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.issues_type.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.issues_type }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.subject.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.subject.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.subject }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.module.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.module.label }}</label>
+                            <div class="col-sm-10">
+                                <div>
+                                    {{ form.module }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.desc.id_for_label }}"
+                                   class="col-sm-2 control-label">{{ form.desc.label }}</label>
+                            <div class="col-sm-10">
+                                <div id="editor">
+                                    {{ form.desc }}
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.status.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.status.label }}</label>
+                                <div class="col-md-8 clearfix">
+                                    <div>
+                                        {{ form.status }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                            <div class="col-md-6 pd-0">
+                                <label for=" {{ form.priority.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.priority.label }}</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.priority }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">指派给</label>
+                                <div class="col-md-8">
+                                    {{ form.assign }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">关注者</label>
+                                <div class="col-md-8">
+
+                                    {{ form.attention }}
+
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">开始时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.start_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">截止时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.end_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">模式</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.mode }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label"> 父问题</label>
+                                <div class="col-md-8">
+
+                                    {{ form.parent }}
+
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-5">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-search" aria-hidden="true"></i> 操作记录
+                </div>
+                <div class="panel-body comment-area">
+                    <div class="comment-list">
+
+                    </div>
+                    <hr/>
+                    <div class="comment-text" id="commentText">
+                        <div class="form-group">
+                            <textarea id="content" rows="6" class="form-control"
+                                      placeholder="请输入要回复的内容"></textarea>
+                            <span class="error-msg"></span>
+                        </div>
+
+                        <input class="btn btn-primary" type="button" id="btnSubmit" value="提 交">
+                        <div class="reply-user hide" id="replyUser">
+                            回复 <span></span>
+                            <i class="fa fa-times-circle" aria-hidden="true" style="color: #9d9d9d;"></i>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hide" id="recordTemplate">
+        <div class="item clearfix">
+            <div class="left-avatar"></div>
+            <div class="right-info">
+                <pre></pre>
+                <div class="desc">
+                    <div class="msg">
+                        <i class="fa fa-bullhorn" aria-hidden="true"></i>
+                        <span class="type"></span>
+                    </div>
+                    <div class="msg">
+                        <i class="fa fa-user-o" aria-hidden="true"></i>
+                        <span class="user"></span>
+                    </div>
+                    <div class="msg">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        <span class="date"></span>
+                    </div>
+
+                    <a href="#commentText" class="reply">
+                        <i class="fa fa-commenting-o" aria-hidden="true"></i> 回复
+                    </a>
+
+                </div>
+            </div>
+            <div class="child">
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/editor/editormd.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrapselect/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'plugin/bootstrapselect/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script>
+        var WIKI_UPLOAD_URL = "{% url 'wiki_upload' request.tracer.project.id %}";
+        var ISSUES_RECORD_API = "{% url 'issues_record' project_id=request.tracer.project.id issue_id=issue_object.id %}";
+        var EDITOR;
+        var ISSUES_CHANGE_API = "{% url 'issues_change' project_id=request.tracer.project.id issue_id=issue_object.id %}";
+        $(function () {
+            initMarkdown();
+            initDatePicker();
+            initIssuesReply();
+            bindCancelReplyUser();
+            bindBtnSubmit();
+            bindIssuesChange();
+        });
+        function initIssuesReply() {
+            $.ajax({
+                url:ISSUES_RECORD_API,
+                type:"GET",
+                dataType:"JSON",
+                success:function (res) {
+                    if(res.status){
+                        //console.log(res);
+                        //后台返回问题回复的一个个对象，通过循环添加到模板中(先写一个段要插入的html，然后克隆一份，添加数据，再把这段html加到模板中显示)
+                        $.each(res.data,function (index,item) {
+                            createRecordNote(item);
+                        })
+                    }
+                }
+            })
+        }
+        function createRecordNote(item) {
+            var $item = $('#recordTemplate').find('.item').clone();
+            $item.find('.left-avatar').html(item.creator[0].toUpperCase());
+            $item.find('pre').html(item.content);
+            $item.find('.user').html(item.creator);
+            $item.find('.type').html(item.reply_type);
+            $item.find('.date').html(item.datetime);
+            $item.find('.reply').attr('parent-id',item.parent_id);
+            $item.attr('id',item.id);
+            $item.attr('username',item.creator);
+            //
+            if(item.parent_id){
+                $('#'+item.parent_id).children('.child').append($item);
+            }else{
+                $('.comment-list').append($item);
+            }
+            //再为生成的每条记录的回复添加点击事件，在回复框的回复按钮边上生成一个 回复xxx
+            $item.on('click','.reply',function () {
+                $('#replyUser').removeClass('hide').attr('parent-id',$item.attr('id')).children('span').text($item.attr('username'));
+            });
+        }
+        //取消 回复给XXX 的显示
+        function bindCancelReplyUser() {
+            $('#replyUser').click(function () {
+                $('#replyUser').addClass('hide').removeAttr('parent-id').children('span').text('');
+            });
+        }
+        //初始化时间选择器插件
+        function initDatePicker() {
+            $('#id_start_date,#id_end_date').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: '0',
+                language: 'zh-CN', //中文显示，要引入一个js
+                autoclose: true
+            });
+        }
+
+        //初始化Markdown编辑器
+        function initMarkdown() {
+            EDITOR = editormd('editor', {
+                placeholder: '请输入内容',
+                height: 300,
+                path: "{% static 'plugin/editor/lib/' %}",
+                //如果需要markdown编辑器中支持本地图片上传，要传入以下几个参数
+                imageUpload: true,
+                imageFormats: ["jpg", "jpeg", "png", "gif"], //这个参数一定要是一个列表，不能写成元祖，不然会有问题，一直不调用对应的视图函数
+                imageUploadURL: WIKI_UPLOAD_URL, //上传时会向这个url发送请求，所以写一个视图函数来匹配这个url进行处理
+                toolbarAutoFixed: false,//编辑器功能图标栏 随滚动条同步移动
+                toolbarIcons: function () {
+                    //定制编辑器功能图标的显示
+                    return ["bold", "hr", "del", "italic", "quote", "|", "image", "preview", "watch", "fullscreen", "||", "save"]
+                },
+                toolbarCustomIcons: {
+                    save: "<input type='button'value='保存' class='btn btn-success btn-sm' onclick='saveDesc();' />" //自定义功能，
+                },
+                onload: function () {
+                    this.previewing();//markdown加载时先以预览形式展示
+                }
+            })
+        }
+        //提交按钮绑定事件，向后台提交数据
+        function bindBtnSubmit() {
+            $("#commentText .error-msg").text("");
+            $('#btnSubmit').click(function () {
+                $.ajax({
+                    url:ISSUES_RECORD_API,
+                    type:'POST',
+                    data:{content:$('#content').val(),reply:$('#replyUser').attr('parent-id')}, //input textarea应该是用val()获取输入的值，而不是text()
+                    dataType:'JSON',
+                    success:function (res) {
+                        //console.log(res);
+                        if(res.status){
+                            //location.reload();
+                            createRecordNote(res.data);
+                            $('#replyUser').addClass('hide').removeAttr('parent-id').children('span').text('');
+                            $('#content').val('');
+                        }else{
+                            $.each(res.error, function (k, v) {
+                                $('#content').next('.error-msg').text(v[0]);
+                            })
+                        }
+                    }
+                });
+            });
+        }
+        //为问题中的每个标签都绑定chang事件，这样当标签值被改变时，就会触发
+        function bindIssuesChange() {
+            //这里测试遇到了问题，更改assign/parent/attension这三个字段时会post两次，且第二次post发送的数据还是{"value":""} 导致错误
+            //猜想可能是这个标签下有两个class='form-control'的标签  果然如此  表单字段套着个div  他的class也包含form-control
+            //主要是因为bootstrap-select插件会给修饰的字段外套一层div,且div的class中包含form-control，点击了里面的字段也相当于点击了外层div
+            //怪不得触发两次，每个标签的name和value都作为一次post的数据，应该阻止事件冒泡
+            $('#editForm').find('.form-control').change(function (event) {//find方法找到的所有元素可以直接通过此形式绑定事件,修改后按Enter或者焦点移走就会触发事件
+                var postDict = {name:$(this).attr('name'),value:$(this).val()}; //变更的是哪个字段，该字段的值修改成什么
+                postAjaxData(postDict);
+                event.stopPropagation();//这样就没问题了。
+            });
+            //单独测试一个字段时又没问题，应该是绑定事件时又问题
+            //$('#id_assign').change(function () {
+             //   var postDict = {name: 'assign', value: $(this).val()};
+              //  postAjaxData(postDict);
+            //});
+        }
+        function saveDesc() {
+            var postDict = {nama:'desc',value:EDITOR.getValue()}; //markdown编辑器中取到输入的值 编辑器对象.getValue()
+            //console.log(postDict)
+            postAjaxData(postDict);
+        }
+        function postAjaxData(postDict) {
+            $.ajax({
+                url:ISSUES_CHANGE_API,
+                type:"POST",
+                header:{ //添加请求头，告诉后台发送的数据是一个json形式的字符串，后台要json.loads
+                  "Content-Type":"application/json;charset=utf-8"
+                },
+                data:JSON.stringify(postDict),//post是一个字典，因为其中包含复杂的数据结构,不是简单的 键值都是字符串的 格式 所以最好转换成json字符串传递给后台
+                dataType:"JSON",                    //因为传过去的不是字典而是字符串了，后端需要用request.body获取，并且获取的是b''格式 需要decode
+                success:function (res) {
+                    //console.log(res);
+                    if(res.status){
+                        //调用生成节点的函数，生成操作记录
+                        createRecordNote(res.data);
+                    }else{
+                        $('#id_'+postDict['name']).parent().next('.error-msg').text(res.error)
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

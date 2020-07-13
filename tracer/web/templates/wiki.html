@@ -1,0 +1,129 @@
+{% extends 'layout/manage.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugin/editor/css/editormd.preview.min.css' %}">
+    <style>
+        .panel-default {
+
+        }
+        {#flex布局 能让几个div显示在同一行 且左右显示#}
+        .panel-default .panel-heading {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .panel-body {
+            padding: 0;
+        }
+
+        .title-list {
+            border-right: 1px solid #dddddd;
+            min-height: 500px;
+        }
+        .title-list ul{
+            padding-left: 15px;
+        }
+        .title-list ul a{
+            display: block;
+            padding: 5px 0;
+        }
+        .content {
+            border-left: 1px solid #dddddd;
+            min-height: 600px;
+            margin-left: -1px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div>
+                    <i class="fa fa-book" aria-hidden="true"></i>wiki知识库
+                </div>
+                <div class="function">
+                    <a type="button" class="btn btn-success btn-xs"
+                                         href="{% url 'wiki_add' request.tracer.project.id %}">
+                                        <i class="fa fa-plus-circle" aria-hidden="true"></i>新建</a>
+                {% if wiki_object %}
+                    <a type="button" class="btn btn-primary btn-xs" href="{% url 'wiki_edit' project_id=request.tracer.project.id wiki_id=wiki_object.id %}"><i class="fa fa-edit"></i>编辑</a>
+                    <a type="button" class="btn btn-danger btn-xs" href="{% url 'wiki_delete' project_id=request.tracer.project.id wiki_id=wiki_object.id %}"><i class="fa fa-trash"></i>删除</a>
+                {% endif %}
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <!--栅格系统,一个div里创2个div,一行一共是分成12格，左边那块占3格,右边那块占9格-->
+                <div class="col-sm-3 title-list">
+                    <ul id="catalog">
+
+                    </ul>
+                </div>
+                <div class="col-sm-9 content">
+                    {% if wiki_object %}
+                        <div style="text-align: center;padding-top: 20px">
+                            <div id="previewMarkdown">
+                                <textarea>{{ wiki_object.content }}</textarea>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center;padding-top: 20px">
+                            <h1>《{{ request.tracer.project.name }}》wiki文档库</h1>.
+                            <a href="{% url 'wiki_add' request.tracer.project.id %}"><i class="fa fa-plus-circle" aria-hidden="true"></i>新建文章</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugin/editor/editormd.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/flowchart.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/jquery.flowchart.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/marked.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/prettify.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/raphael.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/sequence-diagram.min.js' %}"></script>
+    <script src="{% static 'plugin/editor/lib/underscore.min.js' %}"></script>
+    <script>
+        var WIKI_DETAIL_URL = "{% url 'wiki' project_id=request.tracer.project.id %}";
+        $(function () {
+            dirDisplay();
+            initPreviewMarkdown();
+        });
+        function initPreviewMarkdown() {
+            //将markdown编写的内容转成HTML在页面上显示，第一个参数是装着内容的标签的id 第二个参数是一个转化时的配置参数
+            editormd.markdownToHTML('previewMarkdown',{
+                htmlDecode:"style,script,iframe",//过滤这三种标签，安全起见，让他们以字符串显示
+            })
+        }
+        function dirDisplay() {
+            $.ajax({
+                url:"{% url 'wiki_catalog' request.tracer.project.id %}",
+                type:"GET",
+                dataType:"JSON",
+                success:function (res) {
+                    if(res.status){
+                        //console.log(res.data)
+
+                        $.each(res.data,function (index,item) {
+                            var href = WIKI_DETAIL_URL+'?wiki_id='+item.id;
+                            var li = $('<li>').attr('id','id_'+item.id).append($('<a>').attr('href',href).text(item.title)).append($('<ul>'));
+                            if(!item.parent_id){
+                                $('#catalog').append(li);
+                            }else{
+                                $('#id_'+item.parent_id).children('ul').append(li)
+                            }
+                        })
+                    }else{
+
+                    }
+                }
+
+            })
+        }
+    </script>
+{% endblock %}
