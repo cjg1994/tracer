@@ -1,4 +1,4 @@
-# -*- coding=utf-8
+﻿# -*- coding=utf-8
 """
 腾讯云cos存储实例，实现上传文件
 """
@@ -11,8 +11,8 @@ import logging
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
-secret_id = 'AKIDQKURDVt7NuPDtL9zpRq23qTtFRRHYMK5'      # 替换为用户的 secretId
-secret_key = 'lxwhy3uXyCdw93oMLTRFqZqrcDbaJqfN'      # 替换为用户的 secretKey
+secret_id = ''      # 替换为用户的 secretId
+secret_key = ''      # 替换为用户的 secretKey
 region = 'ap-shanghai'     # 替换为用户的 Region ,区域代码
 
 config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key)
